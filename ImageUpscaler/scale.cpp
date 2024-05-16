@@ -7,10 +7,11 @@
 #include <vector>
 #include <cmath>
 #include <time.h>
+#include <omp.h>
 
 using namespace std;
 
-// Lanczos kernel function
+//Lanczos kernel function
 double lanczos(double x, double a) {
     double pi = 3.14159265358979323846;
     if (x == 0) { return 1.0; }
@@ -19,6 +20,9 @@ double lanczos(double x, double a) {
 }
 
 int main(int argc, char* argv[]) {
+
+    int num_threads = atoi(argv[2]);
+    omp_set_num_threads(num_threads);
 
     //Timer variables
     struct timespec start, end;
@@ -57,6 +61,7 @@ int main(int argc, char* argv[]) {
     //Start timer
     clock_gettime(CLOCK_MONOTONIC, &start);
 
+#pragma omp parallel for collapse(2)
     for (int y = 0; y < output_height; y++) {
         for (int x = 0; x < output_width; x++) {
             double sum = 0.0;
@@ -78,6 +83,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    //Stop timer
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
     //Write output file
     ofstream output("output.pgm", ios::binary);
     if (!output) {
@@ -93,7 +101,6 @@ int main(int argc, char* argv[]) {
     cout << "Image upscaled successfully" << endl;
     
     //Display elapsed time
-    clock_gettime(CLOCK_MONOTONIC, &end);
     fstart=start.tv_sec + (start.tv_nsec / 1000000000.0);
     fend=end.tv_sec + (end.tv_nsec / 1000000000.0);
 
